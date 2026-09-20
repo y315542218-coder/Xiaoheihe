@@ -19,9 +19,9 @@ AIGC:
 
 <!-- 在这里放截图，建议用相对路径引用 images/ 目录 -->
 
-![首页效果](home.png)
-![详情页效果](detail.png)
-![Boss 模式](boss-mode.png)
+![首页效果](home.png.png)
+![详情页效果](detail.png.png)
+![Boss 模式](boss-mode.png.png)
 
 ## 功能
 
