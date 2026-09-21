@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         小黑盒 VS Code 摸鱼模式
 // @namespace    https://www.xiaoheihe.cn/
-// @version      4.3.1
+// @version      4.6.0
 // @description  纯前端深色换肤：通过覆盖小黑盒自身的设计令牌(CSS 变量)把整站变成 VS Code 深色外观，内容、图片、排版全部保持原样。附 VS Code 编辑器外壳(活动栏/侧边栏/标签页/状态栏)。Ctrl+` Boss 模式 / Ctrl+Shift+P 命令面板 / Ctrl+Alt+V 一键开关还原。
 // @author       TeleAgent
 // @match        https://xiaoheihe.cn/*
@@ -261,6 +261,72 @@
   body.vscode-mode .section-title__content { color: var(--vsc-string) !important; }
   body.vscode-mode .comment-item__content { color: var(--vsc-text) !important; }
 
+  /* 详情页二级页面：正文/作者/标签/评论等写死深色文字 → 浅色。
+     实测详情页不戴口罩令牌，正文 .post__content .text 写死 rgb(20,25,30)、
+     返回按钮/作者名/分类标签/评论tab/评论用户名等一票近黑，深色背景下完全看不清。
+     统一按 VS Code 语义提亮：正文白、标题橙、作者白、次级信息灰、用户名亮蓝。 */
+  /* 正文 */
+  body.vscode-mode .post__content,
+  body.vscode-mode .post__content .text,
+  body.vscode-mode .post__content p,
+  body.vscode-mode .post__content b,
+  body.vscode-mode .post__content li,
+  body.vscode-mode .post__content .line,
+  body.vscode-mode .hb-article,
+  body.vscode-mode .hb-article p,
+  body.vscode-mode .hb-article .content { color: var(--vsc-text) !important; }
+  /* 返回按钮 + 作者名 */
+  body.vscode-mode .page-header__back-btn,
+  body.vscode-mode .back-btn__text,
+  body.vscode-mode .page-header__username,
+  body.vscode-mode .link-user__username { color: var(--vsc-text) !important; }
+  /* 分类标签 */
+  body.vscode-mode .hb-cpt__content-tag,
+  body.vscode-mode .content-tag-text { color: var(--vsc-text) !important; }
+  /* 评论区切换 tab */
+  body.vscode-mode .slide-tab__tab-item,
+  body.vscode-mode .slide-tab__tab-label,
+  body.vscode-mode .slide-tab__tab-cnt { color: var(--vsc-dim) !important; }
+  /* 评论用户名（含楼中楼） */
+  body.vscode-mode .info-box__username,
+  body.vscode-mode .children-item__comment-creator { color: var(--vsc-fn) !important; }
+  /* 回复/点赞操作数字 */
+  body.vscode-mode .link-reply__operation-item,
+  body.vscode-mode .link-reply__operation-desc { color: var(--vsc-dim) !important; }
+
+  /* 图片帖/混合帖正文（image-text 结构）：写死深色 —— 详情页正文黑的另一个真凶。
+     v4.5.0 只盖了文字帖 .post__content 和长文帖 .hb-article，
+     图片帖正文是 .image-text__content，同样写死 rgb(20,25,30)。 */
+  body.vscode-mode .image-text__content,
+  body.vscode-mode .image-text__content p,
+  body.vscode-mode .image-text__content span,
+  body.vscode-mode .image-text__title { color: var(--vsc-text) !important; }
+
+  /* 帖子标题父级：图片帖的标题文字直接写在 .link-section-title 上
+     （没有 .section-title__content 子元素），只盖子级会漏。 */
+  body.vscode-mode .link-section-title { color: var(--vsc-string) !important; }
+
+  /* ================================================================
+   * 话题页（/app/topic/link/…，从分类/话题标签点进去的列表页）
+   * 独立页面结构，首页/详情页规则完全管不到：
+   *   .topic-link__panel        整个内容面板 8000px+ 写死白底
+   *   .topic-link__filter-row   「综合/智能排序」筛选栏白底
+   *   main.topic-link__main::after  伪元素画整页白底板
+   *   .topic-link__splitline::after  帖子分隔线伪元素浅灰底
+   * 一起压平，否则整页白底上叠浅色文字，完全看不清。 */
+  body.vscode-mode .topic-link__panel,
+  body.vscode-mode .topic-link__filter-row {
+    background-color: transparent !important; background-image: none !important;
+  }
+  body.vscode-mode main.topic-link__main::before,
+  body.vscode-mode main.topic-link__main::after,
+  body.vscode-mode .topic-link__splitline::before,
+  body.vscode-mode .topic-link__splitline::after {
+    background-color: transparent !important; background-image: none !important; box-shadow: none !important;
+  }
+  /* 话题页帖子底部话题名深灰文字 */
+  body.vscode-mode .bbs-new-style-bottom__rich-node { color: var(--vsc-dim) !important; }
+
   /* 站点用伪元素画了大片白底板，一并压平。 */
   body.vscode-mode main > section::before, body.vscode-mode main > section::after,
   body.vscode-mode .list::before, body.vscode-mode .list::after,
@@ -286,6 +352,25 @@
   body.vscode-mode #page-bbs-link .layout-normal > div,
   body.vscode-mode #page-bbs-link .layout-normal > div > div {
     background-color: transparent !important; background-image: none !important;
+  }
+
+  /* 站点 JS 动态注入的「滚动遮罩」(data-mask-frame / data-mask) —— 实测白条真凶。
+     小黑盒会在 body 末尾挂一套 fixed 遮罩模拟「内容在头部下方滑过」的效果：
+       data-mask="top-bg"    顶部 88px 浅灰底 (rgb(247,248,249))
+       data-mask="top-edge"  其下 8px 白色圆角条 (rgb(255,255,255))
+       data-mask="bottom-edge/bottom-bg" 页面底部同款
+     全部是 inline style 写死浅色、无 class、不在 #page-bbs-link 内，之前怎么点名都漏。
+     必须用属性选择器，且 !important 才能压过 inline style(无 !important)。 */
+  body.vscode-mode [data-mask-frame],
+  body.vscode-mode [data-mask] {
+    background-color: transparent !important; background-image: none !important;
+  }
+
+  /* 楼中楼回复 hover 高亮：站点用 .comment-children-item:hover::after 画浅灰白底
+     (rgb(243,244,245))，深色模式下悬停会整条闪白。改成 VS Code 深灰 hover 色。 */
+  body.vscode-mode .link-comment__comment-children .comment-children-item:hover::after,
+  body.vscode-mode .comment-children-item:hover::after {
+    background-color: var(--vsc-hover) !important; background-image: none !important;
   }
 
   /* 隐藏原导航(被标签栏+命令面板取代)与右侧推广位 */
